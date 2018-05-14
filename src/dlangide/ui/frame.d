@@ -751,7 +751,7 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         editItem.add(ACTION_EDIT_COPY, ACTION_EDIT_PASTE, 
             ACTION_EDIT_CUT, ACTION_EDIT_UNDO, ACTION_EDIT_REDO);
         editItem.addSeparator();
-        editItem.add(ACTION_EDITOR_FIND, ACTION_EDITOR_FIND_NEXT, ACTION_EDITOR_FIND_PREV, ACTION_EDITOR_REPLACE, ACTION_FIND_TEXT, ACTION_EDITOR_TOGGLE_BOOKMARK);
+        editItem.add(ACTION_FIND_TEXT, ACTION_EDITOR_FIND, ACTION_EDITOR_FIND_NEXT, ACTION_EDITOR_FIND_PREV, ACTION_EDITOR_REPLACE, ACTION_EDITOR_TOGGLE_BOOKMARK);
         editItem.addSeparator();
         MenuItem editItemAdvanced = new MenuItem(new Action(221, "MENU_EDIT_ADVANCED"));
         editItemAdvanced.add(ACTION_EDIT_INDENT, ACTION_EDIT_UNINDENT, ACTION_EDIT_TOGGLE_LINE_COMMENT, ACTION_EDIT_TOGGLE_BLOCK_COMMENT);
@@ -770,7 +770,8 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         MenuItem navItem = new MenuItem(new Action(21, "MENU_NAVIGATE"));
         navItem.add(ACTION_GO_TO_DEFINITION, ACTION_GET_COMPLETIONS, ACTION_GET_DOC_COMMENTS, 
             ACTION_GET_PAREN_COMPLETION, ACTION_EDITOR_GOTO_PREVIOUS_BOOKMARK, 
-            ACTION_EDITOR_GOTO_NEXT_BOOKMARK, ACTION_GO_TO_LINE);
+            ACTION_EDITOR_GOTO_NEXT_BOOKMARK, ACTION_GO_TO_LINE, ACTION_GO_TO_PREV_POSITION,
+            ACTION_GO_TO_NEXT_POSITION);
 
         MenuItem projectItem = new MenuItem(new Action(21, "MENU_PROJECT"));
         projectItem.add(ACTION_PROJECT_SET_STARTUP, ACTION_PROJECT_REFRESH, ACTION_PROJECT_UPDATE_DEPENDENCIES, ACTION_PROJECT_SETTINGS);
@@ -988,6 +989,8 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
             case IDEActions.FileSaveAll:
             case IDEActions.FileSaveAs:
             case IDEActions.GotoLine:
+            case IDEActions.GotoPrevPosition:
+            case IDEActions.GotoNextPosition:
             case EditorActions.Find:
             case EditorActions.FindNext:
             case EditorActions.FindPrev:
@@ -1311,6 +1314,14 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                                 }
                             });
                     }
+                    return true;
+                case IDEActions.GotoPrevPosition:
+                    window.showMessageBox(UIString.fromId("ERROR"c), "GotoPrevPosition:Override me mfka");
+                    Log.d("GotoPrevPosition:Override me mfka");
+                    return true;
+                case IDEActions.GotoNextPosition:
+                    Log.d("GotoNextPosition:Override me mfka");
+                    window.showMessageBox(UIString.fromId("ERROR"c), "GotoNextPosition:Override me mfka");
                     return true;
                 case IDEActions.GetDocComments:
                     Log.d("Trying to get doc comments.");
