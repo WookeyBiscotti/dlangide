@@ -13,8 +13,8 @@
 
     "dependencies": {
         "dlangui": "==0.9.178",
-        "dsymbol": "~>0.2.9",
-        "dcd": "~>0.9.1"
+        "dsymbol": "~>0.3.7",
+        "dcd": "~>0.9.6"
     },
 
     "copyFiles-windows": [
