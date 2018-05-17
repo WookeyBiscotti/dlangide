@@ -45,6 +45,8 @@ import std.algorithm : equal, endsWith;
 import std.array : empty;
 import std.string : split;
 import std.path;
+import std.container;
+
 
 // TODO: get version from GIT commit
 //version is now stored in file views/VERSION
@@ -108,6 +110,7 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         window.onCanClose = &onCanClose;
         window.onClose = &onWindowClose;
         applySettings(_settings);
+        cursorHistory = new CursorHistory;
     }
 
     ~this() {
@@ -1307,6 +1310,7 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                                     // Go to line
                                     currentEditor.setCaretPos(num - 1, 0);
                                     currentEditor.setFocus();
+                                    cursorHistory.PushNewPosition(currentEditor.filename, num - 1, 0);
                                 }
                                 catch (ConvException e) {
                                     currentEditor.setFocus();
@@ -1316,12 +1320,16 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                     }
                     return true;
                 case IDEActions.GotoPrevPosition:
-                    window.showMessageBox(UIString.fromId("ERROR"c), "GotoPrevPosition:Override me mfka");
-                    Log.d("GotoPrevPosition:Override me mfka");
+                    if (currentEditor) {
+                        Log.d("Go to prev position");
+                        cursorHistory.MoveToPrev();
+                    }
                     return true;
                 case IDEActions.GotoNextPosition:
-                    Log.d("GotoNextPosition:Override me mfka");
-                    window.showMessageBox(UIString.fromId("ERROR"c), "GotoNextPosition:Override me mfka");
+                    if (currentEditor) {
+                        Log.d("Go to next position");
+                        cursorHistory.MoveToNext();
+                    }
                     return true;
                 case IDEActions.GetDocComments:
                     Log.d("Trying to get doc comments.");
@@ -2040,5 +2048,46 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         Log.i("onWindowClose()");
         stopExecution();
     }
+
+    static struct CursorPosition{
+        string filePath;
+        uint row;
+        uint col;
+    };
+
+    class CursorHistory {
+        CursorPosition[] cursorHistory;
+        uint currentPos;
+
+        void PushNewPosition(string filePath, uint row, uint col) {
+            if (cursorHistory.length  == currentPos + 1) {
+                cursorHistory ~= CursorPosition(filePath, row, col);
+            } else {
+                cursorHistory = cursorHistory[0..currentPos];
+                cursorHistory ~= CursorPosition(filePath, row, col);
+            }
+            ++currentPos;
+        }
+        void MoveToNext() {
+            if (cursorHistory.length > currentPos + 1) {
+                ++currentPos;
+                openSourceFile(cursorHistory[currentPos].filePath);
+                currentEditor.setCaretPos(cursorHistory[currentPos].row,
+                    cursorHistory[currentPos].col);
+                currentEditor.setFocus();
+            }
+        }
+        void MoveToPrev() {
+            if (currentPos > 0) {
+                --currentPos;
+                openSourceFile(cursorHistory[currentPos].filePath);
+                currentEditor.setCaretPos(cursorHistory[currentPos].row,
+                    cursorHistory[currentPos].col);
+                currentEditor.setFocus();
+            }
+        }
+    }
+    
+    CursorHistory cursorHistory;
 }
 
