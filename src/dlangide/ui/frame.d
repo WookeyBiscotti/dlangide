@@ -1290,7 +1290,9 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                 case IDEActions.GoToDefinition:
                     if (currentEditor) {
                         Log.d("Trying to go to definition.");
+                        cursorHistory.PushNewPosition();
                         currentEditor.editorTool.goToDefinition(currentEditor(), currentEditor.caretPos);
+                        cursorHistory.PushNewPosition();
                     }
                     return true;
                 case IDEActions.GotoLine:
@@ -1308,9 +1310,10 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                                         return;
                                     }
                                     // Go to line
+                                    cursorHistory.PushNewPosition();
                                     currentEditor.setCaretPos(num - 1, 0);
                                     currentEditor.setFocus();
-                                    cursorHistory.PushNewPosition(currentEditor.filename, num - 1, 0);
+                                    cursorHistory.PushNewPosition();
                                 }
                                 catch (ConvException e) {
                                     currentEditor.setFocus();
@@ -2056,9 +2059,12 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
     };
 
     class CursorHistory {
-        CursorPosition[] cursorHistory;
-        uint currentPos;
+        private CursorPosition[] cursorHistory;
+        private uint currentPos;
 
+        void PushNewPosition() {
+            PushNewPosition(currentEditor().filename, currentEditor.caretPos.line, currentEditor.caretPos.pos);
+        }
         void PushNewPosition(string filePath, uint row, uint col) {
             if (cursorHistory.length  == currentPos + 1) {
                 cursorHistory ~= CursorPosition(filePath, row, col);
@@ -2079,6 +2085,10 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         }
         void MoveToPrev() {
             if (currentPos > 0) {
+                if (currentEditor.caretPos.line != cursorHistory[$ - 1].row &&
+                    currentEditor.caretPos.pos != cursorHistory[$ - 1].col) {
+                    PushNewPosition();
+                }
                 --currentPos;
                 openSourceFile(cursorHistory[currentPos].filePath);
                 currentEditor.setCaretPos(cursorHistory[currentPos].row,
