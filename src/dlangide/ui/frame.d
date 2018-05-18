@@ -404,9 +404,12 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
             Log.d("found source file");
             if (sourceFile)
                 _wsPanel.selectItem(sourceFile);
+
+            cursorHistory.PushNewPosition();
             currentEditor().setCaretPos(line, 0);
             currentEditor().setCaretPos(line, column);
-        }
+            cursorHistory.PushNewPosition();
+            }
         return true;
     }
 
@@ -2060,18 +2063,26 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
 
     class CursorHistory {
         private CursorPosition[] cursorHistory;
-        private uint currentPos;
+        private uint currentPos = -1;
+
+        private bool CheckIfCurentPosIsCurrentHistoryPos() {
+            if(cursorHistory.length == 0){
+                return false;
+            }
+            return currentEditor.caretPos.line != cursorHistory[currentPos].row &&
+                currentEditor.caretPos.pos != cursorHistory[currentPos].col;
+        }
 
         void PushNewPosition() {
-            PushNewPosition(currentEditor().filename, currentEditor.caretPos.line, currentEditor.caretPos.pos);
+            //if (!CheckIfCurentPosIsCurrentHistoryPos()) {
+                PushNewPosition(currentEditor().filename, currentEditor.caretPos.line, currentEditor.caretPos.pos);
+            //}
         }
         void PushNewPosition(string filePath, uint row, uint col) {
-            if (cursorHistory.length  == currentPos + 1) {
-                cursorHistory ~= CursorPosition(filePath, row, col);
-            } else {
+            if (cursorHistory.length != 0) {
                 cursorHistory = cursorHistory[0..currentPos];
-                cursorHistory ~= CursorPosition(filePath, row, col);
             }
+            cursorHistory ~= CursorPosition(filePath, row, col);
             ++currentPos;
         }
         void MoveToNext() {
@@ -2085,10 +2096,6 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         }
         void MoveToPrev() {
             if (currentPos > 0) {
-                if (currentEditor.caretPos.line != cursorHistory[$ - 1].row &&
-                    currentEditor.caretPos.pos != cursorHistory[$ - 1].col) {
-                    PushNewPosition();
-                }
                 --currentPos;
                 openSourceFile(cursorHistory[currentPos].filePath);
                 currentEditor.setCaretPos(cursorHistory[currentPos].row,
