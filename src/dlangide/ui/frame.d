@@ -1295,7 +1295,6 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                         Log.d("Trying to go to definition.");
                         cursorHistory.PushNewPosition();
                         currentEditor.editorTool.goToDefinition(currentEditor(), currentEditor.caretPos);
-                        cursorHistory.PushNewPosition();
                     }
                     return true;
                 case IDEActions.GotoLine:
@@ -2069,14 +2068,14 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
             if(cursorHistory.length == 0){
                 return false;
             }
-            return currentEditor.caretPos.line != cursorHistory[currentPos].row &&
-                currentEditor.caretPos.pos != cursorHistory[currentPos].col;
+            return currentEditor.caretPos.line == cursorHistory[currentPos].row &&
+                currentEditor.caretPos.pos == cursorHistory[currentPos].col;
         }
 
         void PushNewPosition() {
-            //if (!CheckIfCurentPosIsCurrentHistoryPos()) {
+            if (!CheckIfCurentPosIsCurrentHistoryPos()) {
                 PushNewPosition(currentEditor().filename, currentEditor.caretPos.line, currentEditor.caretPos.pos);
-            //}
+            }
         }
         void PushNewPosition(string filePath, uint row, uint col) {
             if (cursorHistory.length != 0) {
