@@ -2062,10 +2062,10 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
 
     class CursorHistory {
         private CursorPosition[] cursorHistory;
-        private uint currentPos = -1;
+        private int currentPos = -1;
 
         private bool CheckIfCurentPosIsCurrentHistoryPos() {
-            if(cursorHistory.length == 0){
+            if(cursorHistory.length == 0) {
                 return false;
             }
             return currentEditor.caretPos.line == cursorHistory[currentPos].row &&
@@ -2079,7 +2079,7 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         }
         void PushNewPosition(string filePath, uint row, uint col) {
             if (cursorHistory.length != 0) {
-                cursorHistory = cursorHistory[0..currentPos];
+                cursorHistory = cursorHistory[0..currentPos + 1];
             }
             cursorHistory ~= CursorPosition(filePath, row, col);
             ++currentPos;
