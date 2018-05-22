@@ -241,7 +241,7 @@ class SearchWidget : TabWidget {
         }
         else {
             Log.d("Searching in: " ~ project.filename);
-            SearchMatchList match = findMatches(project.filename, text);
+            SearchMatchList match = findMatches(project.filename, text, makeSearchFlags());
             if(match.matches.length > 0) {
                 synchronized {
                     _matchedList ~= match;
@@ -268,7 +268,7 @@ class SearchWidget : TabWidget {
         switch (_searchScope.text) {
             case "File":
                 if (_frame.currentEditor) {
-                    SearchMatchList match = findMatches(_frame.currentEditor.filename, source);
+                    SearchMatchList match = findMatches(_frame.currentEditor.filename, source, makeSearchFlags());
                     if(match.matches.length > 0)
                         _matchedList ~= match;
                 }
@@ -366,16 +366,38 @@ class SearchWidget : TabWidget {
     }
 }
 
-SearchMatchList findMatches(in string filename, in dstring searchString) {
+bool isWordChar(dchar ch) {
+    if (ch >= 'a' && ch <= 'z')
+        return true;
+    if (ch >= 'A' && ch <= 'Z')
+        return true;
+    if (ch >= '0' && ch <= '9')
+        return true;
+    if (ch == '_')
+        return true;
+    return false;
+}
+
+SearchMatchList findMatches(in string filename, in dstring searchString, uint flags) {
+    import std.string : indexOf, CaseSensitive, Yes, No;
     EditableContent content = new EditableContent(true);
     content.load(filename);
     SearchMatchList match;
     match.filename = filename;
 
     foreach(int lineIndex, dstring line; content.lines) {
-        auto colIndex = line.indexOf(searchString);
-        
+        auto colIndex = line.indexOf(searchString, flags & TextSearchFlag.CaseSensitive ? Yes.caseSensitive : No.caseSensitive);
+
         if (colIndex != -1) {
+            if (flags & TextSearchFlag.WholeWords)
+            {
+                if (!(colIndex == 0 || !isWordChar(line[colIndex - 1])) ||
+                    !(colIndex + searchString.length == line.length ||
+                    !isWordChar(line[colIndex + searchString.length]))) {
+                    continue;
+                }
+            }
+            
             match.matches ~= SearchMatch(lineIndex, colIndex, line);
         }
     }
