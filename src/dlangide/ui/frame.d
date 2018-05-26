@@ -110,7 +110,7 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         window.onCanClose = &onCanClose;
         window.onClose = &onWindowClose;
         applySettings(_settings);
-        cursorHistory = new CursorHistory;
+        caretHistory = new CaretHistory;
     }
 
     ~this() {
@@ -405,10 +405,10 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
             if (sourceFile)
                 _wsPanel.selectItem(sourceFile);
 
-            cursorHistory.PushNewPosition();
+            caretHistory.pushNewPosition();
             currentEditor().setCaretPos(line, 0);
             currentEditor().setCaretPos(line, column);
-            cursorHistory.PushNewPosition();
+            caretHistory.pushNewPosition();
             }
         return true;
     }
@@ -1293,9 +1293,9 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                 case IDEActions.GoToDefinition:
                     if (currentEditor) {
                         Log.d("Trying to go to definition.");
-                        cursorHistory.PushNewPosition();
+                        caretHistory.pushNewPosition();
                         currentEditor.editorTool.goToDefinition(currentEditor(), currentEditor.caretPos);
-                        cursorHistory.PushNewPosition();
+                        caretHistory.pushNewPosition();
                     }
                     return true;
                 case IDEActions.GotoLine:
@@ -1313,10 +1313,10 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                                         return;
                                     }
                                     // Go to line
-                                    cursorHistory.PushNewPosition();
+                                    caretHistory.pushNewPosition();
                                     currentEditor.setCaretPos(num - 1, 0);
                                     currentEditor.setFocus();
-                                    cursorHistory.PushNewPosition();
+                                    caretHistory.pushNewPosition();
                                 }
                                 catch (ConvException e) {
                                     currentEditor.setFocus();
@@ -1328,13 +1328,13 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
                 case IDEActions.GotoPrevPosition:
                     if (currentEditor) {
                         Log.d("Go to prev position");
-                        cursorHistory.MoveToPrev();
+                        caretHistory.moveToPrev();
                     }
                     return true;
                 case IDEActions.GotoNextPosition:
                     if (currentEditor) {
                         Log.d("Go to next position");
-                        cursorHistory.MoveToNext();
+                        caretHistory.moveToNext();
                     }
                     return true;
                 case IDEActions.GetDocComments:
@@ -2055,56 +2055,47 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
         stopExecution();
     }
 
-    static struct CursorPosition{
+    static struct CaretPosition{
         string filePath;
-        uint row;
-        uint col;
+        uint line;
+        uint pos;
     };
 
-    class CursorHistory {
-        private CursorPosition[] cursorHistory;
+    class CaretHistory {
+        private CaretPosition[] caretHistory;
         private uint currentPos = -1;
 
-        private bool CheckIfCurentPosIsCurrentHistoryPos() {
-            if(cursorHistory.length == 0){
-                return false;
-            }
-            return currentEditor.caretPos.line != cursorHistory[currentPos].row &&
-                currentEditor.caretPos.pos != cursorHistory[currentPos].col;
+        void pushNewPosition() {
+            pushNewPosition(currentEditor().filename, currentEditor.caretPos.line, currentEditor.caretPos.pos);
         }
 
-        void PushNewPosition() {
-            //if (!CheckIfCurentPosIsCurrentHistoryPos()) {
-                PushNewPosition(currentEditor().filename, currentEditor.caretPos.line, currentEditor.caretPos.pos);
-            //}
-        }
-        void PushNewPosition(string filePath, uint row, uint col) {
-            if (cursorHistory.length != 0) {
-                cursorHistory = cursorHistory[0..currentPos];
+        void pushNewPosition(string filePath, uint line, uint pos) {
+            if (caretHistory.length != 0) {
+                caretHistory = caretHistory[0..currentPos];
             }
-            cursorHistory ~= CursorPosition(filePath, row, col);
+            caretHistory ~= CaretPosition(filePath, line, pos);
             ++currentPos;
         }
-        void MoveToNext() {
-            if (cursorHistory.length > currentPos + 1) {
+
+        void moveToNext() {
+            if (caretHistory.length > currentPos + 1) {
                 ++currentPos;
-                openSourceFile(cursorHistory[currentPos].filePath);
-                currentEditor.setCaretPos(cursorHistory[currentPos].row,
-                    cursorHistory[currentPos].col);
+                openSourceFile(caretHistory[currentPos].filePath);
+                currentEditor.setCaretPos(caretHistory[currentPos].line, caretHistory[currentPos].pos);
                 currentEditor.setFocus();
             }
         }
-        void MoveToPrev() {
+
+        void moveToPrev() {
             if (currentPos > 0) {
                 --currentPos;
-                openSourceFile(cursorHistory[currentPos].filePath);
-                currentEditor.setCaretPos(cursorHistory[currentPos].row,
-                    cursorHistory[currentPos].col);
+                openSourceFile(caretHistory[currentPos].filePath);
+                currentEditor.setCaretPos(caretHistory[currentPos].line, caretHistory[currentPos].pos);
                 currentEditor.setFocus();
             }
         }
     }
-    
-    CursorHistory cursorHistory;
+
+    CaretHistory caretHistory;
 }
 
