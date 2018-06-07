@@ -85,9 +85,10 @@ class DSourceEdit : SourceEdit, EditableContentMarksChangeListener {
         setTokenHightlightColor(TokenCategory.Identifier, style.customColor("syntax_highlight_ident"));
         setTokenHightlightColor(TokenCategory.Character, style.customColor("syntax_highlight_character"));  // brown
         setTokenHightlightColor(TokenCategory.Error, style.customColor("syntax_highlight_error"));  // red
+		setTokenHightlightColor(TokenCategory.Identifier_Function, 0x00ff0000);  // red
+		setTokenHightlightColor(TokenCategory.Identifier_Class, 0x000000ff);  // blue
         setTokenHightlightColor(TokenCategory.Comment_Documentation, style.customColor("syntax_highlight_comment_documentation"));
-
-        super.onThemeChanged();
+		super.onThemeChanged();
     }
 
     protected IDESettings _settings;

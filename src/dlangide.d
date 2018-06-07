@@ -94,12 +94,12 @@ extern (C) int UIAppMain(string[] args) {
             // set window icon
             window.windowIcon = drawableCache.getImage("dlangui-logo1");
         }
-    
+
         //Widget w = new Widget();
         //pragma(msg, w.click.return_t, "", w.click.params_t);
 
         IDEFrame frame = new IDEFrame(window);
-        
+
         // Open project, if it specified in command line
         if (args.length > 1)
         {
@@ -118,6 +118,7 @@ extern (C) int UIAppMain(string[] args) {
 
         // show window
         window.show();
+
         // restore window state, size, position
         frame.restoreUIStateOnStartup();
 

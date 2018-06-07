@@ -8,10 +8,13 @@ import ddc.lexer.textsource;
 import ddc.lexer.exceptions;
 import ddc.lexer.tokenizer;
 
+import dparse.ast;
+
 class SimpleDSyntaxSupport : SyntaxSupport {
 
     EditableContent _content;
     SourceFile _file;
+
     ArraySourceLines _lines;
     Tokenizer _tokenizer;
     this (string filename) {
@@ -32,7 +35,7 @@ class SimpleDSyntaxSupport : SyntaxSupport {
     }
 
     private enum BracketMatch {
-        CONTINUE,
+            CONTINUE,
             FOUND,
             ERROR
     }
@@ -530,7 +533,7 @@ class SimpleDSyntaxSupport : SyntaxSupport {
     }
 
     /// categorize characters in content by token types
-    void updateHighlight(dstring[] lines, TokenPropString[] props, int changeStartLine, int changeEndLine) {
+    override void updateHighlight(dstring[] lines, TokenPropString[] props, int changeStartLine, int changeEndLine) {
         //Log.d("updateHighlight");
         long ms0 = currentTimeMillis();
         _props = props;
@@ -631,11 +634,64 @@ class SimpleDSyntaxSupport : SyntaxSupport {
         } catch (Exception e) {
             Log.e("exception while trying to parse D source", e);
         }
-        _lines.close();
-        _props = null;
+
         long elapsed = currentTimeMillis() - ms0;
         if (elapsed > 20)
             Log.d("updateHighlight took ", elapsed, "ms");
+
+		import dparse.lexer;
+    	import dparse.parser : parseModule;
+    	import dparse.rollback_allocator : RollbackAllocator;
+		import std.stdio;
+
+	    LexerConfig config;
+	    auto cache = StringCache(StringCache.defaultBucketCount);
+	    auto tokens = getTokensForParser(to!string(this.content.text), config, &cache);
+
+
+		RollbackAllocator rba;
+    	auto m = parseModule(tokens, "test.d", &rba);
+
+		
+
+		class TestVisitor : ASTVisitor
+		{
+		    alias visit = ASTVisitor.visit;
+		    int indentLevel;
+
+		    override void visit(const FunctionDeclaration decl)
+		    {
+		        decl.accept(this);
+				//if (_props.length > decl.name.line - 1 && _props[decl.name.line - 1].length > decl.name.column)
+				for(auto i = 0; i < decl.name.text.length; ++i)
+					//if (_props.length > decl.name.line - 1 && _props[decl.name.line - 1].length > decl.name.column)
+					_props[decl.name.line - 1][decl.name.column + i - 1] = TokenCategory.Identifier_Function;
+					
+		    }
+		    override void visit(const ClassDeclaration decl)
+		    {
+
+				writeln(decl.line);
+		        decl.accept(this);
+				//if (_props.length > decl.name.line - 1 && _props[decl.name.line - 1].length > decl.name.column)
+				for(auto i = 0; i < decl.name.text.length; ++i)
+					//if (_props.length > decl.name.line - 1 && _props[decl.name.line - 1].length > decl.name.column)
+					_props[decl.name.line - 1][decl.name.column + i - 1] = TokenCategory.Identifier_Class;
+					
+		    }
+		    override void visit(const Token decl)
+		    {
+				//if (_props.length > decl.name.line - 1 && _props[decl.name.line - 1].length > decl.name.column)
+				for(auto i = 0; i < decl.text.length; ++i)
+					if (_props.length > decl.line - 1 && _props[decl.line - 1].length > decl.column - 1 + i)
+					_props[decl.line - 1][decl.column + i - 1] = TokenCategory.Keyword;
+		    }
+		}
+
+		auto visitor = new TestVisitor();
+		visitor.visit(m);
+		_lines.close();
+        _props = null;
     }
 
 
