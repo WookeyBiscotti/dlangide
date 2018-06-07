@@ -2063,7 +2063,7 @@ class IDEFrame : AppFrame, ProgramExecutionStatusListener, BreakpointListChangeL
 
     class CaretHistory {
         private CaretPosition[] caretHistory;
-        private uint currentPos = -1;
+        private int currentPos = -1;
 
         void pushNewPosition() {
             pushNewPosition(currentEditor().filename, currentEditor.caretPos.line, currentEditor.caretPos.pos);
